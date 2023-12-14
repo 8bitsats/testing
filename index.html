@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Ordinals Inscription Explorer</title>
+    <style>
+        /* CSS styles will be added here */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 600px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .inscription {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .inscription-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .error-message {
+            color: red;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="inscriptionsContainer">
+        <!-- Inscriptions will be loaded here -->
+    </div>
+
+    <script>
+        // JavaScript code will be added here
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('inscriptionsContainer');
+
+            fetch('https://ordapi.xyz/feed')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    data.forEach(inscription => {
+                        const div = document.createElement('div');
+                        div.className = 'inscription';
+                        div.innerHTML = `
+                            <div class="inscription-header">Inscription ID: ${inscription.id}</div>
+                            <div>Inscription Data: ${inscription.data}</div>
+                        `;
+                        container.appendChild(div);
+                    });
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    container.innerHTML = `<div class="error-message">${error.message}</div>`;
+                });
+        });
+    </script>
+</body>
+</html>
