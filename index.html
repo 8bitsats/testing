@@ -44,50 +44,108 @@
         }
     </style>
 </head>
-</head>
 <body>
     <div class="container">
-        <input type="text" id="walletAddress" placeholder="Enter Wallet Address" />
-        <button id="fetchButton">Fetch Inscriptions</button>
+        <div>
+            <input type="text" id="walletAddress" placeholder="Enter Wallet Address" />
+            <button id="fetchButton">Fetch Inscriptions</button>
+        </div>
+        <div>
+            <input type="text" id="inscriptionNumber" placeholder="Enter Inscription Number" />
+            <button id="fetchInscriptionButton">Fetch Inscription Details</button>
+        </div>
         <div id="inscriptionsContainer"></div>
+        <div id="previewContainer"></div>
+        <div id="inscriptionDetailsContainer"></div>
     </div>
-
-    <script>
+  <script>
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('inscriptionsContainer');
             const fetchButton = document.getElementById('fetchButton');
             const walletAddressInput = document.getElementById('walletAddress');
+            const previewContainer = document.getElementById('previewContainer');
 
             fetchButton.addEventListener('click', function() {
                 const walletAddress = walletAddressInput.value.trim();
                 if (walletAddress) {
-                    fetch(`GET https://ordapi.xyz/address/:address`)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Network response was not ok');
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            container.innerHTML = ''; // Clear previous results
-                            data.forEach(inscription => {
-                                const div = document.createElement('div');
-                                div.className = 'inscription';
-                                div.innerHTML = `
-                                    <div class="inscription-header">Inscription ID: ${inscription.id}</div>
-                                    <div>Inscription Data: ${inscription.data}</div>
-                                `;
-                                container.appendChild(div);
-                            });
-                        })
-                        .catch(error => {
-                            console.error('There was a problem with the fetch operation:', error);
-                            container.innerHTML = `<div class="error-message">${error.message}</div>`;
-                        });
+                    fetchInscriptions(walletAddress);
                 } else {
                     alert('Please enter a wallet address.');
                 }
             });
+
+            fetchInscriptionButton.addEventListener('click', function() {
+                const inscriptionNumber = inscriptionNumberInput.value.trim();
+                if (inscriptionNumber) {
+                    fetchInscriptionDetails(inscriptionNumber);
+                } else {
+                    alert('Please enter an inscription number.');
+                }
+            });
+
+            function updateLiveContent() {
+                const inscriptions = container.getElementsByClassName('inscription');
+                Array.from(inscriptions).forEach(inscriptionDiv => {
+                    const inscriptionId = inscriptionDiv.dataset.inscriptionId;
+                    fetch(`https://ordapi.xyz/content/${inscriptionId}`)
+                        .then(response => response.ok ? response.json() : Promise.reject('Failed to load live content'))
+                        .then(contentData => {
+                            const contentDiv = inscriptionDiv.getElementsByClassName('inscription-content')[0];
+                            contentDiv.innerHTML = `Live Content: ${contentData.content}`;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching live content:', error);
+                        });
+                });
+            }
+
+            // Update live content every 60 seconds (or your preferred interval)
+            setInterval(updateLiveContent, 60000);
+            function fetchInscriptions(walletAddress) {
+                fetch(`https://ordapi.xyz/address/${walletAddress}`)
+                    .then(response => response.ok ? response.json() : Promise.reject('Failed to load data'))
+                    .then(data => {
+                        container.innerHTML = ''; // Clear previous results
+                        data.forEach(inscription => {
+                            const div = document.createElement('div');
+                            div.className = 'inscription';
+                            div.innerHTML = `
+                                <div class="inscription-header">Inscription ID: ${inscription.id}</div>
+                                <div>Inscription Data: ${inscription.data}</div>
+                                <button onclick="fetchPreview(${inscription.id})">Preview</button>
+                            `;
+                            container.appendChild(div);
+                        });
+                    })
+                    .catch(error => {
+                        container.innerHTML = `<div class="error-message">${error}</div>`;
+                    });
+            }
+
+            window.fetchPreview = function(inscriptionId) {
+                fetch(`https://ordapi.xyz/preview/${inscriptionId}`)
+                    .then(response => response.ok ? response.json() : Promise.reject('Failed to load preview'))
+                    .then(previewData => {
+                        previewContainer.innerHTML = `<img src="${previewData.previewUrl}" alt="Inscription Preview" />`;
+                    })
+                    .catch(error => {
+                        previewContainer.innerHTML = `<div class="error-message">${error}</div>`;
+                    });
+            };
+        });
+ function fetchInscriptionDetails(inscriptionId) {
+                fetch(`https://ordapi.xyz/inscription/${inscriptionId}`)
+                    .then(response => response.ok ? response.json() : Promise.reject('Failed to load inscription details'))
+                    .then(details => {
+                        inscriptionDetailsContainer.innerHTML = `
+                            <div><strong>Inscription ID:</strong> ${details.id}</div>
+                            <div><strong>Details:</strong> ${details.details}</div>
+                        `;
+                    })
+                    .catch(error => {
+                        inscriptionDetailsContainer.innerHTML = `<div class="error-message">${error}</div>`;
+                    });
+            }
         });
     </script>
 </body>
