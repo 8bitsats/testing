@@ -24,14 +24,14 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .inscription, .preview {
+        .inscription {
             margin-bottom: 15px;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
 
-        .inscription-header, .preview-header {
+        .inscription-header {
             font-weight: bold;
             margin-bottom: 5px;
         }
@@ -52,14 +52,9 @@
             <input type="text" id="inscriptionNumber" placeholder="Enter Inscription Number" />
             <button id="fetchInscriptionButton">Fetch Inscription Details</button>
         </div>
-        <div>
-            <input type="text" id="previewInscriptionId" placeholder="Enter Inscription ID for Preview" />
-            <button id="fetchPreviewButton">Fetch Inscription Preview</button>
-        </div>
         <div id="inscriptionsContainer"></div>
         <div id="previewContainer"></div>
         <div id="inscriptionDetailsContainer"></div>
-        <div id="recentInscriptionsContainer"></div>
     </div>
 
     <script>
@@ -71,57 +66,88 @@
             const fetchInscriptionButton = document.getElementById('fetchInscriptionButton');
             const inscriptionNumberInput = document.getElementById('inscriptionNumber');
             const inscriptionDetailsContainer = document.getElementById('inscriptionDetailsContainer');
-            const fetchPreviewButton = document.getElementById('fetchPreviewButton');
-            const previewInscriptionIdInput = document.getElementById('previewInscriptionId');
-            const recentInscriptionsContainer = document.getElementById('recentInscriptionsContainer');
 
-            // Existing functionality for fetchButton, fetchInscriptionButton, fetchInscriptions, fetchInscriptionDetails, fetchPreview
-
-            fetchPreviewButton.addEventListener('click', function() {
-                const inscriptionId = previewInscriptionIdInput.value.trim();
-                if (inscriptionId) {
-                    fetchInscriptionContent(inscriptionId);
+            fetchButton.addEventListener('click', function() {
+                const walletAddress = walletAddressInput.value.trim();
+                if (walletAddress) {
+                    fetchInscriptions(walletAddress);
                 } else {
-                    alert('Please enter an inscription ID.');
+                    alert('Please enter a wallet address.');
                 }
             });
 
-            function fetchInscriptionContent(inscriptionId) {
-                fetch(`https://ordapi.xyz/content/${inscriptionId}`)
-                    .then(response => response.ok ? response.json() : Promise.reject('Failed to load content'))
-                    .then(content => {
-                        previewContainer.innerHTML = `
-                            <div class="preview">
-                                <div class="preview-header">Inscription ID: ${inscriptionId}</div>
-                                <div>Content: ${content.content}</div>
-                            </div>
+            fetchInscriptionButton.addEventListener('click', function() {
+                const inscriptionNumber = inscriptionNumberInput.value.trim();
+                if (inscriptionNumber) {
+                    fetchInscriptionDetails(inscriptionNumber);
+                } else {
+                    alert('Please enter an inscription number.');
+                }
+            });
+
+            function fetchInscriptions(walletAddress) {
+                fetch(`https://ordapi.xyz/address/${walletAddress}`)
+                    .then(response => response.ok ? response.json() : Promise.reject('Failed to load data'))
+                    .then(data => {
+                        container.innerHTML = ''; // Clear previous results
+                        data.forEach(inscription => {
+                            const div = document.createElement('div');
+                            div.className = 'inscription';
+                            div.setAttribute('data-inscriptionId', inscription.id);
+                            div.innerHTML = `
+                                <div class="inscription-header">Inscription ID: ${inscription.id}</div>
+                                <div class="inscription-content">Inscription Data: ${inscription.data}</div>
+                                <button onclick="fetchPreview(${inscription.id})">Preview</button>
+                            `;
+                            container.appendChild(div);
+                        });
+                    })
+                    .catch(error => {
+                        container.innerHTML = `<div class="error-message">${error}</div>`;
+                    });
+            }
+
+            function fetchInscriptionDetails(inscriptionId) {
+                fetch(`https://ordapi.xyz/inscription/${inscriptionId}`)
+                    .then(response => response.ok ? response.json() : Promise.reject('Failed to load inscription details'))
+                    .then(details => {
+                        inscriptionDetailsContainer.innerHTML = `
+                            <div><strong>Inscription ID:</strong> ${details.id}</div>
+                            <div><strong>Details:</strong> ${details.details}</div>
                         `;
+                    })
+                    .catch(error => {
+                        inscriptionDetailsContainer.innerHTML = `<div class="error-message">${error}</div>`;
+                    });
+            }
+
+            window.fetchPreview = function(inscriptionId) {
+                fetch(`https://ordapi.xyz/preview/${inscriptionId}`)
+                    .then(response => response.ok ? response.json() : Promise.reject('Failed to load preview'))
+                    .then(previewData => {
+                        previewContainer.innerHTML = `<img src="${previewData.previewUrl}" alt="Inscription Preview" />`;
                     })
                     .catch(error => {
                         previewContainer.innerHTML = `<div class="error-message">${error}</div>`;
                     });
-            }
+            };
 
-            function fetchRecentInscriptions() {
-                fetch('https://ordapi.xyz/feed')
-                    .then(response => response.ok ? response.json() : Promise.reject('Failed to load feed'))
-                    .then(data => {
-                        recentInscriptionsContainer.innerHTML = ''; // Clear previous content
-                        data.forEach(inscription => {
-                            const link = document.createElement('a');
-                            link.href = `https://ordapi.xyz/inscription/${inscription.id}`;
-                            link.textContent = `Inscription ID: ${inscription.id}`;
-                            link.target = '_blank';
-                            recentInscriptionsContainer.appendChild(link);
-                            recentInscriptionsContainer.appendChild(document.createElement('br'));
+            function updateLiveContent() {
+                const inscriptions = container.getElementsByClassName('inscription');
+                Array.from(inscriptions).forEach(inscriptionDiv => {
+                    const inscriptionId = inscriptionDiv.dataset.inscriptionId;
+                    fetch(`https://ordapi.xyz/content/${inscriptionId}`)
+                        .then(response => response.ok ? response.json() : Promise.reject('Failed to load live content'))
+                        .then(contentData => {
+                            const contentDiv = inscriptionDiv.getElementsByClassName('inscription-content')[0];
+                            contentDiv.innerHTML = `Live Content: ${contentData.content}`;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching live content:', error);
                         });
-                    })
-                    .catch(error => {
-                        recentInscriptionsContainer.innerHTML = `<div class="error-message">${error}</div>`;
-                    });
+                });
             }
 
-            fetchRecentInscriptions();
             // Update live content every 60 seconds (or your preferred interval)
             setInterval(updateLiveContent, 60000);
         });
