@@ -45,18 +45,28 @@
 </head>
 <body>
     <div class="container">
-        <input type="text" id="walletAddress" placeholder="Enter Wallet Address" />
-        <button id="fetchButton">Fetch Inscriptions</button>
+        <div>
+            <input type="text" id="walletAddress" placeholder="Enter Wallet Address" />
+            <button id="fetchButton">Fetch Inscriptions</button>
+        </div>
+        <div>
+            <input type="text" id="inscriptionNumber" placeholder="Enter Inscription Number" />
+            <button id="fetchInscriptionButton">Fetch Inscription Details</button>
+        </div>
         <div id="inscriptionsContainer"></div>
         <div id="previewContainer"></div>
+        <div id="inscriptionDetailsContainer"></div>
     </div>
-
-  <script>
+<script>
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('inscriptionsContainer');
             const fetchButton = document.getElementById('fetchButton');
             const walletAddressInput = document.getElementById('walletAddress');
             const previewContainer = document.getElementById('previewContainer');
+            const fetchInscriptionButton = document.getElementById('fetchInscriptionButton');
+            const inscriptionNumberInput = document.getElementById('inscriptionNumber');
+            const inscriptionDetailsContainer = document.getElementById('inscriptionDetailsContainer');
+
 
             fetchButton.addEventListener('click', function() {
                 const walletAddress = walletAddressInput.value.trim();
@@ -64,6 +74,15 @@
                     fetchInscriptions(walletAddress);
                 } else {
                     alert('Please enter a wallet address.');
+                }
+            });
+
+            fetchInscriptionButton.addEventListener('click', function() {
+                const inscriptionNumber = inscriptionNumberInput.value.trim();
+                if (inscriptionNumber) {
+                    fetchInscriptionDetails(inscriptionNumber);
+                } else {
+                    alert('Please enter an inscription number.');
                 }
             });
 
@@ -105,7 +124,8 @@
                         container.innerHTML = `<div class="error-message">${error}</div>`;
                     });
             }
-
+    div.setAttribute('data-inscriptionId', inscription.id); // Add this line
+            }
             window.fetchPreview = function(inscriptionId) {
                 fetch(`https://ordapi.xyz/preview/${inscriptionId}`)
                     .then(response => response.ok ? response.json() : Promise.reject('Failed to load preview'))
@@ -116,6 +136,20 @@
                         previewContainer.innerHTML = `<div class="error-message">${error}</div>`;
                     });
             };
+        });
+ function fetchInscriptionDetails(inscriptionId) {
+                fetch(`https://ordapi.xyz/inscription/${inscriptionId}`)
+                    .then(response => response.ok ? response.json() : Promise.reject('Failed to load inscription details'))
+                    .then(details => {
+                        inscriptionDetailsContainer.innerHTML = `
+                            <div><strong>Inscription ID:</strong> ${details.id}</div>
+                            <div><strong>Details:</strong> ${details.details}</div>
+                        `;
+                    })
+                    .catch(error => {
+                        inscriptionDetailsContainer.innerHTML = `<div class="error-message">${error}</div>`;
+                    });
+            }
         });
     </script>
 </body>
