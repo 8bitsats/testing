@@ -86,7 +86,7 @@
             });
 
             function fetchInscriptions(walletAddress) {
-                fetch(`https://ordapi.xyz/address/${walletAddress}`)
+                fetch(`GET https://ordapi.xyz/address/:address`)
                     .then(response => response.ok ? response.json() : Promise.reject('Failed to load data'))
                     .then(data => {
                         container.innerHTML = ''; // Clear previous results
@@ -108,7 +108,7 @@
             }
 
             function fetchInscriptionDetails(inscriptionId) {
-                fetch(`https://ordapi.xyz/inscription/${inscriptionId}`)
+                fetch(`GET https://ordapi.xyz/inscription/:inscription_id`)
                     .then(response => response.ok ? response.json() : Promise.reject('Failed to load inscription details'))
                     .then(details => {
                         inscriptionDetailsContainer.innerHTML = `
@@ -122,7 +122,7 @@
             }
 
             window.fetchPreview = function(inscriptionId) {
-                fetch(`https://ordapi.xyz/preview/${inscriptionId}`)
+                fetch(`GET https://ordapi.xyz/preview/:inscription_id`)
                     .then(response => response.ok ? response.json() : Promise.reject('Failed to load preview'))
                     .then(previewData => {
                         previewContainer.innerHTML = `<img src="${previewData.previewUrl}" alt="Inscription Preview" />`;
@@ -136,7 +136,7 @@
                 const inscriptions = container.getElementsByClassName('inscription');
                 Array.from(inscriptions).forEach(inscriptionDiv => {
                     const inscriptionId = inscriptionDiv.dataset.inscriptionId;
-                    fetch(`https://ordapi.xyz/content/${inscriptionId}`)
+                    fetch(`GET https://ordapi.xyz/content/:inscription_id`)
                         .then(response => response.ok ? response.json() : Promise.reject('Failed to load live content'))
                         .then(contentData => {
                             const contentDiv = inscriptionDiv.getElementsByClassName('inscription-content')[0];
